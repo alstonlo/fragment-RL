@@ -53,5 +53,8 @@ class FragmentVocab:
     def __len__(self):
         return len(self.arms)
 
+    def __getitem__(self, idx):
+        return self.arms[idx]
+
     def cull(self, vocab_size):
         self.arms = self.arms[:vocab_size]

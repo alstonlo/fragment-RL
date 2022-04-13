@@ -1,24 +1,15 @@
-from rdkit.Chem import QED
-
-from src.utils.mol_utils import enum_molecule_mods, Molecule
-
-
 class ScaffoldDecorator:
 
     def __init__(
             self,
             init_mol,
             prop_fn,
-            atom_types,
-            allowed_ring_sizes,
             max_mol_size,
             max_steps,
             discount
     ):
         self.init_mol = init_mol
         self.prop_fn = prop_fn
-        self.atom_types = atom_types
-        self.allowed_ring_sizes = allowed_ring_sizes
         self.max_mol_size = max_mol_size
         self.max_steps = max_steps
         self.discount = discount
@@ -74,31 +65,3 @@ class ScaffoldDecorator:
 
     def _reward_fn(self):
         return self.prop_fn(self._mol) * (self.discount ** self._steps_left)
-
-
-class QEDScaffoldDecorator(ScaffoldDecorator):
-
-    def __init__(
-            self,
-            init_mol,
-            atom_types=("C", "O", "N"),
-            allowed_ring_sizes=(5, 6),
-            max_mol_size=38,
-            max_steps=40,
-            discount=0.9
-    ):
-        super().__init__(
-            init_mol=init_mol,
-            prop_fn=self.qed,
-            atom_types=atom_types,
-            allowed_ring_sizes=allowed_ring_sizes,
-            max_mol_size=max_mol_size,
-            max_steps=max_steps,
-            discount=discount
-        )
-
-    def qed(self, mol):
-        try:
-            return QED.qed(mol.rdkmol)
-        except ValueError:
-            return 0.0

@@ -31,10 +31,7 @@ def break_single_bond(mol, u, v):
         raise ValueError
 
     if u not in mapping[0]:
-        mapping = [mapping[1], mapping[0]]
-        frags = [frags[1], frags[0]]
-
-    # re-index
+        mapping, frags = mapping[::-1], frags[::-1]
     u = mapping[0].index(u)
     v = mapping[1].index(v)
     return Fragment(frags[0], u), Fragment(frags[1], v)
