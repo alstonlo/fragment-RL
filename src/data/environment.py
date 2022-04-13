@@ -15,10 +15,10 @@ class FragmentBasedDesigner:
         self.max_mol_size = max_mol_size
         self.max_steps = max_steps
         self.discount = discount
+        self.nop_action = (0, len(vocab))
 
         self.state = (init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
-        self.nop_action = (0, len(vocab))
 
     @property
     def torch_state(self):
