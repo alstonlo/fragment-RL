@@ -1,3 +1,5 @@
+import pickle
+
 from rdkit.Chem.rdchem import BondType
 
 from src.chem.fragments import break_single_bond
@@ -7,7 +9,8 @@ class FragmentVocab:
 
     @classmethod
     def load_from_pkl(cls, file_path):
-        pass
+        with open(file_path, "rb") as cache:
+            return pickle.load(cache)
 
     @classmethod
     def extract_from_mols(cls, mols, arm_size=10):
