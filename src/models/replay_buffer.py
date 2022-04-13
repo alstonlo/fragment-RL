@@ -29,15 +29,15 @@ class ReplayBuffer:
         batch = random.sample(self.storage, k=k)
         s_ts, acts, rews, s_tp1s, dones = tuple(zip(*batch))
 
-        s_ts = self._batch_state(s_ts)
+        s_ts = self._collate_states(s_ts)
         acts = torch.tensor(acts, dtype=torch.long)
         rews = torch.tensor(rews, dtype=torch.float)
-        s_tp1s = self._batch_state(s_tp1s)
+        s_tp1s = self._collate_states(s_tp1s)
         dones = torch.tensor(dones, dtype=torch.long)
 
         return s_ts, acts, rews, s_tp1s, dones
 
-    def _batch_state(self, states):
+    def _collate_states(self, states):
         graphs, masks = tuple(zip(*states))
         graphs = dgl.batch(graphs)
         masks = torch.cat(list(masks), dim=0)
