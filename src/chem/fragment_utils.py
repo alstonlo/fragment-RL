@@ -3,6 +3,7 @@ import copy
 from rdkit import Chem
 from rdkit.Chem.rdchem import BondType
 
+
 class Fragment:
 
     def __init__(self, mol, root):

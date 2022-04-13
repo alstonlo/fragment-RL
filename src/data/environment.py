@@ -1,7 +1,9 @@
 import itertools
 
+import torch
+
 from src.chem.fragment_utils import Fragment, combine
-from src.chem.mol_utils import check_validity
+from src.chem.mol_utils import sanitize, mol_to_dgl
 
 
 class FragmentBasedDesigner:
@@ -16,6 +18,18 @@ class FragmentBasedDesigner:
 
         self.state = (init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
+
+    @property
+    def torch_state(self):
+        time = self.steps_left / self.max_steps
+        g = mol_to_dgl(self.mol, time)
+
+        # turn valid actions into mask
+        mask = torch.zeros((self.mol.GetNumAtoms(), len(self.vocab)))
+        a, b = tuple(zip(*list(self.valid_actions)))
+        mask[a, b] = 1
+        
+        return g, mask
 
     @property
     def mol(self):
@@ -41,7 +55,7 @@ class FragmentBasedDesigner:
         skeleton = Fragment(self.mol, action[0])
         arm = self.vocab[action[1]]
         new_mol = combine(skeleton=skeleton, arm=arm)
-        assert check_validity(new_mol)
+        assert sanitize(new_mol)
 
         self.state = (new_mol, self.steps_left - 1)
         self.valid_actions = self._enum_valid_actions()
