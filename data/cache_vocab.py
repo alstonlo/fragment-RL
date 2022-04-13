@@ -17,8 +17,7 @@ if __name__ == "__main__":
         for line in tqdm(lines, desc="Extracting fragments"):
             smiles = line.strip()
             mol = Chem.MolFromSmiles(smiles)
-            if not mol:
-                continue
+            assert mol is not None
             yield mol
 
     data_dir = pathlib.Path(__file__).parent

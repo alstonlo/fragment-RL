@@ -42,31 +42,29 @@ class FragmentBasedDesigner:
 
     @property
     def done(self):
-        return not self.valid_actions
+        return self.steps_left == 0
 
     def reset(self):
         self.state = (self.init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
 
-    def step(self, action):
+    def step(self, action, commit=True):
         if self.done or (action not in self.valid_actions):
             raise ValueError
 
-        # attach fragment vocab[action[1] onto action[0] of current state
-        skeleton = Fragment(self.mol, action[0])
-        arm = self.vocab[action[1]]
-        new_mol = combine(skeleton=skeleton, arm=arm)
-        assert sanitize(new_mol)
+        if action is not None:  # attach fragment vocab[action[1] onto action[0] of current state
+            skeleton = Fragment(self.mol, action[0])
+            arm = self.vocab[action[1]]
+            new_mol = combine(skeleton=skeleton, arm=arm)
+            assert sanitize(new_mol)
+        else:
+            new_mol = self.mol
 
-        self.state = (new_mol, self.steps_left - 1)
-        self.valid_actions = self._enum_valid_actions()
+        reward = self.prop_fn(new_mol) * (self.discount ** (self.steps_left - 1))
 
-        reward = self._reward_fn()
-        if not self.valid_actions:
-            while self.steps_left > 0:
-                self.state = (new_mol, self.steps_left - 1)
-                reward += self._reward_fn()
-
+        if commit:
+            self.state = (new_mol, self.steps_left - 1)
+            self.valid_actions = self._enum_valid_actions()
         return reward
 
     def _enum_valid_actions(self):
@@ -74,7 +72,7 @@ class FragmentBasedDesigner:
             return set()
 
         mol_size = self.mol.GetNumAtoms()
-        valid_actions = set()
+        valid_actions = {None}
         for action in itertools.product(range(mol_size), range(len(self.vocab))):
             atom = self.mol.GetAtomWithIdx(action[0])
             arm = self.vocab[action[1]]
@@ -85,6 +83,3 @@ class FragmentBasedDesigner:
                 continue
             valid_actions.add(action)
         return valid_actions
-
-    def _reward_fn(self):
-        return self.prop_fn(self.mol) * (self.discount ** self.steps_left)

@@ -6,13 +6,14 @@ from rdkit import Chem
 from src.chem.prop_utils import qed
 from src.data.environment import FragmentBasedDesigner
 from src.data.vocab import FragmentVocab
+from src.models.dqn import DummyFragmentDQN
 
 PROJECT_DIR = pathlib.Path(__file__).parents[2]
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--vocab_size", type=int, default=1000)
+    parser.add_argument("--vocab_size", type=int, default=3)
 
     parser.add_argument("--init_mol", type=str, default="CC")
     parser.add_argument("--max_mol_size", type=int, default=38)
@@ -33,6 +34,9 @@ def main():
     )
 
     env.reset()
+
+    # TODO: replace with actual DQN
+    dqn = DummyFragmentDQN(n_feats=18, n_vocab=args.vocab_size)
 
 
 if __name__ == "__main__":
