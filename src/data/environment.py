@@ -66,7 +66,7 @@ class FragmentBasedDesigner:
         reward = self._reward_fn()
         if not self.valid_actions:
             while self.steps_left > 0:
-                self.state = (new_mol, self.steps_left - 1)
+                self.state = (self.mol, self.steps_left - 1)
                 reward += self._reward_fn()
         return reward
 
