@@ -26,10 +26,7 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         k = min(batch_size, len(self))
-        idxs = [random.randrange(len(self.storage)) for _ in range(k)]
-        batch = []
-        for i in idxs:
-            batch.append(self.storage[i])
+        batch = random.sample(self.storage, k=k)
         s_ts, acts, rews, s_tp1s, dones = tuple(zip(*batch))
 
         s_ts = self._batch_state(s_ts)
