@@ -2,7 +2,7 @@ import pickle
 
 from rdkit.Chem.rdchem import BondType
 
-from src.chem.fragments import break_single_bond
+from src.chem.fragment_utils import break_single_bond
 
 
 class FragmentVocab:
