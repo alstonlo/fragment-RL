@@ -1,7 +1,7 @@
 import copy
 
 from rdkit import Chem
-
+from rdkit.Chem.rdchem import BondType
 
 class Fragment:
 
@@ -19,7 +19,7 @@ def break_single_bond(mol, u, v):
     mol = Chem.RWMol(copy.deepcopy(mol))
     bond = mol.GetBondBetweenAtoms(u, v)
 
-    if bond.GetBondType() == Chem.BondType.SINGLE:
+    if bond.GetBondType() == BondType.SINGLE:
         mol.RemoveBond(u, v)
     else:
         raise ValueError
@@ -35,3 +35,12 @@ def break_single_bond(mol, u, v):
     u = mapping[0].index(u)
     v = mapping[1].index(v)
     return Fragment(frags[0], u), Fragment(frags[1], v)
+
+
+def combine(skeleton, arm):
+    mol = Chem.CombineMols(skeleton.mol, arm.mol)
+    mol = Chem.RWMol(mol)
+    u = skeleton.root
+    v = skeleton.mol.GetNumAtoms() + arm.root
+    mol.AddBond(u, v, BondType.SINGLE)
+    return mol.GetMol()

@@ -13,13 +13,13 @@ class FragmentVocab:
             return pickle.load(cache)
 
     @classmethod
-    def extract_from_mols(cls, mols, arm_size=10):
+    def extract_from_mols(cls, mols, max_arm_size=10):
         log = {}
 
         def _keep_arm(_skeleton, _arm):
             if _skeleton.mol.GetAtomWithIdx(_skeleton.root).GetAtomicNum() != 6:
                 return False
-            if _arm.mol.GetNumAtoms() > arm_size:
+            if _arm.mol.GetNumAtoms() > max_arm_size:
                 return False
             if not any(a.GetAtomicNum() != 6 for a in _arm.mol.GetAtoms()):
                 return False
