@@ -1,0 +1,11 @@
+name: fragment-rl
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - rdkit
+  - cpuonly
+  - pytorch
+  - dgl
+  - wandb
+prefix: C:\Users\alsto\miniconda3\envs\fragment-rl
