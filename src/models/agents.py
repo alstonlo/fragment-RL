@@ -26,11 +26,11 @@ class EpsilonGreedyAgent(Agent):
 
     def sample_action(self, env):
         if random.random() < self.epsilon:
-            return random.choice(env.valid_actions)
+            return random.choice(list(env.valid_actions))
         else:
             best = (None, float("-inf"))
             for action in env.valid_actions:
-                score = env.prop_fn(action)
+                score = env.prop_fn(env.forsee(action))
                 if score > best[1]:
                     best = (action, score)
             return best[0]

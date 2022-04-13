@@ -15,7 +15,6 @@ class FragmentBasedDesigner:
         self.max_mol_size = max_mol_size
         self.max_steps = max_steps
         self.discount = discount
-        self.nop_action = (0, len(vocab))
 
         self.state = (init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
@@ -43,36 +42,39 @@ class FragmentBasedDesigner:
 
     @property
     def done(self):
-        return self.steps_left == 0
+        return self.steps_left <= 0
 
     def reset(self):
         self.state = (self.init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
 
-    def step(self, action, commit=True):
+    def forsee(self, action):
         if self.done or (action not in self.valid_actions):
             raise ValueError
 
-        if action == self.nop_action:
-            new_mol = self.mol
-        else:
-            skeleton = Fragment(self.mol, action[0])
-            arm = self.vocab[action[1]]
-            new_mol = combine(skeleton=skeleton, arm=arm)
-            assert sanitize(new_mol)
+        skeleton = Fragment(self.mol, action[0])
+        arm = self.vocab[action[1]]
+        new_mol = combine(skeleton=skeleton, arm=arm)
+        assert sanitize(new_mol)
+        return new_mol
 
-        reward = self.prop_fn(new_mol) * (self.discount ** (self.steps_left - 1))
+    def step(self, action):
+        new_mol = self.forsee(action)
+        self.state = (new_mol, self.steps_left - 1)
+        self.valid_actions = self._enum_valid_actions()
 
-        if commit:
-            self.state = (new_mol, self.steps_left - 1)
-            self.valid_actions = self._enum_valid_actions()
+        reward = self._reward_fn()
+        if not self.valid_actions:
+            while self.steps_left > 0:
+                self.state = (new_mol, self.steps_left - 1)
+                reward += self._reward_fn()
         return reward
 
     def _enum_valid_actions(self):
-        if self.steps_left <= 0:
+        if self.done:
             return set()
 
-        valid_actions = {self.nop_action}
+        valid_actions = set()
         for action in itertools.product(range(self.mol.GetNumAtoms()), range(len(self.vocab))):
             atom = self.mol.GetAtomWithIdx(action[0])
             arm = self.vocab[action[1]]
@@ -83,3 +85,6 @@ class FragmentBasedDesigner:
                 continue
             valid_actions.add(action)
         return valid_actions
+
+    def _reward_fn(self):
+        return self.prop_fn(self.mol) * (self.discount ** self.steps_left)

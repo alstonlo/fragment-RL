@@ -13,7 +13,7 @@ class DummyFragmentDQN:
             nn.ReLU(),
             nn.Linear(32, 32),
             nn.ReLU(),
-            nn.Linear(32, n_vocab)
+            nn.Linear(32, n_vocab + 1)
         )
 
     def forward(self, state):
