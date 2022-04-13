@@ -18,6 +18,7 @@ class FragmentBasedDesigner:
 
         self.state = (init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
+        self.nop_action = (0, len(vocab))
 
     @property
     def torch_state(self):
@@ -52,13 +53,13 @@ class FragmentBasedDesigner:
         if self.done or (action not in self.valid_actions):
             raise ValueError
 
-        if action is not None:  # attach fragment vocab[action[1] onto action[0] of current state
+        if action == self.nop_action:
+            new_mol = self.mol
+        else:
             skeleton = Fragment(self.mol, action[0])
             arm = self.vocab[action[1]]
             new_mol = combine(skeleton=skeleton, arm=arm)
             assert sanitize(new_mol)
-        else:
-            new_mol = self.mol
 
         reward = self.prop_fn(new_mol) * (self.discount ** (self.steps_left - 1))
 
@@ -71,13 +72,12 @@ class FragmentBasedDesigner:
         if self.steps_left <= 0:
             return set()
 
-        mol_size = self.mol.GetNumAtoms()
-        valid_actions = {None}
-        for action in itertools.product(range(mol_size), range(len(self.vocab))):
+        valid_actions = {self.nop_action}
+        for action in itertools.product(range(self.mol.GetNumAtoms()), range(len(self.vocab))):
             atom = self.mol.GetAtomWithIdx(action[0])
             arm = self.vocab[action[1]]
 
-            if mol_size + arm.mol.GetNumAtoms() > self.max_mol_size:
+            if self.mol.GetNumAtoms() + arm.mol.GetNumAtoms() > self.max_mol_size:
                 continue
             if atom.GetImplicitValence() == 0:
                 continue
