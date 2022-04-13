@@ -26,9 +26,10 @@ class FragmentBasedDesigner:
 
         # turn valid actions into mask
         mask = torch.zeros((self.mol.GetNumAtoms(), len(self.vocab)))
-        a, b = tuple(zip(*list(self.valid_actions)))
-        mask[a, b] = 1
-        
+        if self.valid_actions:
+            a, b = tuple(zip(*list(self.valid_actions)))
+            mask[a, b] = 1
+
         return g, mask
 
     @property
@@ -66,7 +67,7 @@ class FragmentBasedDesigner:
                 self.state = (new_mol, self.steps_left - 1)
                 reward += self._reward_fn()
 
-        return self.state, reward
+        return reward
 
     def _enum_valid_actions(self):
         if self.steps_left <= 0:
