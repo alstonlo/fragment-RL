@@ -6,9 +6,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import wandb
-from src.agents import DQNAgent
-from src.utils.replay_buffer import ReplayBuffer
 from tqdm import trange
+
+from src.models.agents import DQNAgent
+from src.models.replay_buffer import ReplayBuffer
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -72,13 +73,13 @@ def train_double_dqn(
     eps_step = 0.99 / n_episodes
 
     replay_buffer = ReplayBuffer(buffer_size)
+
     target_dqn = copy.deepcopy(dqn).to(DEVICE)
     for p in target_dqn.parameters():
         p.requires_grad = False
     target_dqn.eval()
 
     optimizer = torch.optim.Adam(dqn.parameters(), lr=lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10000, gamma=0.9)
 
     for episode in trange(n_episodes, desc="Episodes"):
         env.reset()

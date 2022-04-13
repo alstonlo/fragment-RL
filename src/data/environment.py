@@ -25,10 +25,10 @@ class FragmentBasedDesigner:
         g = mol_to_dgl(self.mol, time)
 
         # turn valid actions into mask
-        mask = torch.zeros((self.mol.GetNumAtoms(), len(self.vocab)))
+        mask = torch.zeros((self.mol.GetNumAtoms(), len(self.vocab)), dtype=torch.bool)
         if self.valid_actions:
             a, b = tuple(zip(*list(self.valid_actions)))
-            mask[a, b] = 1
+            mask[a, b] = True
 
         return g, mask
 

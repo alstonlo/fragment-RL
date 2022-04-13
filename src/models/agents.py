@@ -1,6 +1,6 @@
 import random
 
-import torch
+import numpy as np
 
 
 class Agent:
@@ -43,12 +43,10 @@ class DQNAgent(Agent):
         self.epsilon = epsilon
 
     def sample_action(self, env):
-        action_space = env.valid_actions
-
+        action_space = list(env.valid_actions)
         if random.random() < self.epsilon:
             return random.choice(action_space)
         else:
-            future_obses = [(a, env.state[1] - 1) for a in action_space]
-            pred_values = self.dqn(future_obses).squeeze(1)
-            best = torch.argmax(pred_values).item()
-            return action_space[best]
+            values = self.dqn(env.torch_state).detach().numpy()
+            action = np.unravel_index(values.argmax(), values.shape)
+            return tuple(map(int, action))
