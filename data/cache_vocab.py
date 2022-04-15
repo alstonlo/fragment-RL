@@ -8,7 +8,7 @@ from src.data.vocab import FragmentVocab
 
 if __name__ == "__main__":
     # script to cache extracted vocab from ChEMBL
-    debug = False  # TODO: set to False
+    debug = False
 
     def mol_iter(path):
         with open(path, "r") as f:
