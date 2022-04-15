@@ -1,12 +1,13 @@
 import argparse
 import pathlib
-
+import torch
 from rdkit import Chem
 
 from src.chem.prop_utils import qed
 from src.data.environment import FragmentBasedDesigner
 from src.data.vocab import FragmentVocab
 from src.models.dqn import DummyFragmentDQN
+from src.models.replay_buffer import ReplayBuffer
 
 PROJECT_DIR = pathlib.Path(__file__).parents[2]
 
@@ -35,9 +36,25 @@ def main():
 
     env.reset()
 
-    # TODO: replace with actual DQN
     dqn = DummyFragmentDQN(n_feats=18, n_vocab=args.vocab_size)
 
+    # buffer = ReplayBuffer(100)
+    # for i in range(100):
+    #     s_t = env.torch_state
+    #     output = dqn(s_t)
+    #     act = torch.argmax(output, dim=1)
+    #     rew = env.step(act)
+    #     s_tp1 = env.torch_state
+    #     done = env.done
+    #     buffer.add(s_t=s_t, act=act, rew=rew, s_tp1=s_tp1, done=done)
+    #     if done:
+    #         break
+    #
+    # s_ts, acts, rews, s_tp1s, dones = buffer.sample(100)
 
+    # TODO: replace with actual DQN
+    dqn = DummyFragmentDQN(n_feats=18, n_vocab=args.vocab_size)
+    graphs, masks = dqn(env.torch_state)
+    print(graphs)
 if __name__ == "__main__":
     main()
