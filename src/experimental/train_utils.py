@@ -3,12 +3,14 @@ import logging
 import os
 import pathlib
 import random
+import statistics
 
 import dgl
 import numpy as np
 import torch
 import torch.nn.functional  as F
 import wandb
+from rdkit.Chem import rdDepictor, Draw
 from tqdm import trange
 
 from src.models.agents import DQNAgent
@@ -127,24 +129,36 @@ def val_step(episode, dqn, env, use_wandb, device):
     eps_greedy = DQNAgent(dqn, epsilon=0.05, device=device)  # almost greedy
     greedy = DQNAgent(dqn, epsilon=0.0, device=device)
 
-    exit()
+    eps_outs = []
     with torch.no_grad():
-        mol, value = eps_greedy.rollout(env)
-    qed = env.prop_fn(mol)
+        for _ in range(10):
+            eps_outs.append(eps_greedy.rollout(env))
+        opt_mol, opt_value = greedy.rollout(env)
+    eps_mols, eps_values = tuple(zip(*eps_outs))
+    eps_QEDs = [env.prop_fn(mol) for mol in eps_mols]
 
     metrics = {
         "Episode": episode,
-        "Value": value,
-        "QED": qed,
+        "Value-e=0.05": statistics.fmean(eps_values),
+        "Value-greedy": opt_value,
+        "QED-e=0.05": statistics.fmean(eps_QEDs),
+        "QED-greedy": env.prop_fn(opt_mol)
     }
 
     # wandb logging
     if use_wandb:
         if episode % 20 == 0:
-            metrics["Molecule"] = wandb.Image(mol.visualize())
+            metrics["Mol-greedy"] = wandb.Image(visualize_mol(opt_mol))
+            metrics["Mol-e=0.05"] = wandb.Image(visualize_mol(eps_mols[-1]))
         wandb.log(metrics)
 
         if episode % 100 == 0:
             model_path = str(pathlib.Path(wandb.run.dir) / "model.pt")
             torch.save(dqn, model_path)
             wandb.save(model_path)
+
+
+def visualize_mol(mol, width=300, height=300):
+    rdDepictor.Compute2DCoords(mol)
+    rdDepictor.GenerateDepictionMatching2DStructure(mol, mol)
+    return Draw.MolToImage(mol, size=(width, height))

@@ -16,7 +16,7 @@ PROJECT_DIR = pathlib.Path(__file__).parents[2]
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--use_wandb", type=int, default=0)
+    parser.add_argument("--use_wandb", type=int, default=1)
     parser.add_argument("--seed", type=int, default=413)
 
     parser.add_argument("--vocab_size", type=int, default=3)
@@ -37,11 +37,11 @@ def main():
     args.device = "gpu" if torch.cuda.is_available() else "cpu"
 
     # logging
-    log_dir = pathlib.Path(__file__).parents[2] / "logs" / "qed_dqn"
+    log_dir = pathlib.Path(__file__).parents[2] / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     if args.use_wandb:
-        wandb.init(project="train_QED_FragmentDQN", tensorboard=True, dir=log_dir)
+        wandb.init(project="train_QED_FragmentDQN", dir=str(log_dir))
         wandb.config.update(vars(args))
 
     vocab = FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl")
