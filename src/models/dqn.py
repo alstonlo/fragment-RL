@@ -1,22 +1,27 @@
 import torch
 import torch.nn as nn
 
+from src.models.modules import MLP, GraphEncoder
 
-class DummyFragmentDQN(nn.Module):
-    # for debugging, just applies MLP on node features
 
-    def __init__(self, n_feats, n_vocab):
+class FragmentDQN(nn.Module):
+
+    def __init__(self, n_node_hidden, n_edge_hidden, n_layers, vocab_size, **kwargs):
         super().__init__()
 
-        self.lin = nn.Sequential(
-            nn.Linear(n_feats, 32),
-            nn.ReLU(),
-            nn.Linear(32, 32),
-            nn.ReLU(),
-            nn.Linear(32, n_vocab)
+        self.gnn = GraphEncoder(
+            n_atom_feat=18,  # hardcoded
+            n_bond_feat=6,  # hardcoded
+            n_node_hidden=n_node_hidden,
+            n_edge_hidden=n_edge_hidden,
+            n_layers=n_layers
         )
 
+        self.mlp = MLP(n_node_hidden, vocab_size)
+
     def forward(self, state):
-        values = self.lin(state.ndata["n_feat"])
-        mask = torch.where(state.ndata["mask"], 0.0, float("-inf"))
+        g = state
+        values = self.gnn(g, g.ndata['n_feat'], g.edata['e_feat'])
+        values = self.mlp(values)
+        mask = torch.where(g.ndata["mask"], 0.0, float("-inf"))
         return values + mask
