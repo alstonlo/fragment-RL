@@ -54,7 +54,9 @@ def main():
 
     # TODO: replace with actual DQN
     dqn = DummyFragmentDQN(n_feats=18, n_vocab=args.vocab_size)
-    graphs, masks = dqn(env.torch_state)
-    print(graphs)
+    g, m = env.torch_state
+    print(g.ndata["n_feat"])
+    graphwithmask = dqn(env.torch_state)
+    print(graphwithmask)
 if __name__ == "__main__":
     main()
