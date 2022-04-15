@@ -17,7 +17,6 @@ class DummyFragmentDQN(nn.Module):
         )
 
     def forward(self, state):
-        graphs, masks = state
-        values = self.lin(graphs.ndata["n_feat"])
-        mask = torch.where(masks, 0.0, float("-inf"))
+        values = self.lin(state.ndata["n_feat"])
+        mask = torch.where(state.ndata["mask"], 0.0, float("-inf"))
         return values + mask

@@ -1,11 +1,14 @@
 import argparse
 import pathlib
 
+import torch
+import wandb
 from rdkit import Chem
 
 from src.chem.prop_utils import qed
 from src.data.environment import FragmentBasedDesigner
 from src.data.vocab import FragmentVocab
+from src.experimental.train_utils import train_double_dqn, seed_everything
 from src.models.dqn import DummyFragmentDQN
 
 PROJECT_DIR = pathlib.Path(__file__).parents[2]
@@ -13,13 +16,33 @@ PROJECT_DIR = pathlib.Path(__file__).parents[2]
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--use_wandb", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=413)
+
     parser.add_argument("--vocab_size", type=int, default=3)
 
     parser.add_argument("--init_mol", type=str, default="CC")
     parser.add_argument("--max_mol_size", type=int, default=38)
     parser.add_argument("--max_steps", type=int, default=15)
     parser.add_argument("--discount", type=float, default=0.9)
+
+    parser.add_argument("--buffer_size", type=int, default=10000)
+    parser.add_argument("--n_train_iters", type=int, default=200000)
+    parser.add_argument("--batch_size", type=int, default=10)
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--update_freq", type=int, default=20)
+    parser.add_argument("--polyak", type=float, default=0.0)
+    parser.add_argument("--log_freq", type=int, default=50)
     args = parser.parse_args()
+    args.device = "gpu" if torch.cuda.is_available() else "cpu"
+
+    # logging
+    log_dir = pathlib.Path(__file__).parents[2] / "logs" / "qed_dqn"
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    if args.use_wandb:
+        wandb.init(project="train_QED_FragmentDQN", tensorboard=True, dir=log_dir)
+        wandb.config.update(vars(args))
 
     vocab = FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl")
     vocab.cull(args.vocab_size)
@@ -33,10 +56,12 @@ def main():
         discount=args.discount
     )
 
-    env.reset()
-
     # TODO: replace with actual DQN
+    seed_everything(args.seed)
     dqn = DummyFragmentDQN(n_feats=18, n_vocab=args.vocab_size)
+
+    seed_everything(args.seed)
+    train_double_dqn(dqn=dqn, env=env, **vars(args))
 
 
 if __name__ == "__main__":

@@ -29,8 +29,9 @@ class FragmentBasedDesigner:
         if self.valid_actions:
             a, b = tuple(zip(*list(self.valid_actions)))
             mask[a, b] = True
+        g.ndata["mask"] = mask
 
-        return g, mask
+        return g
 
     @property
     def mol(self):

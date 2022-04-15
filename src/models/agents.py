@@ -16,7 +16,10 @@ class Agent:
             act = self.sample_action(env)
             rew = env.step(act)
             value += rew
-        return env.mol, value
+        product = env.mol
+
+        env.reset()
+        return product, value
 
 
 class EpsilonGreedyAgent(Agent):
@@ -38,15 +41,17 @@ class EpsilonGreedyAgent(Agent):
 
 class DQNAgent(Agent):
 
-    def __init__(self, dqn, epsilon):
+    def __init__(self, dqn, epsilon, device):
         self.dqn = dqn
         self.epsilon = epsilon
+        self.device = device
 
     def sample_action(self, env):
         action_space = list(env.valid_actions)
         if random.random() < self.epsilon:
             return random.choice(action_space)
         else:
-            values = self.dqn(env.torch_state).detach().numpy()
+            s = env.torch_state.to(self.device)
+            values = self.dqn(s).cpu().detach().numpy()
             action = np.unravel_index(values.argmax(), values.shape)
             return tuple(map(int, action))
