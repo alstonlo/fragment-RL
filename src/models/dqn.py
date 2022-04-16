@@ -21,7 +21,11 @@ class FragmentDQN(nn.Module):
 
     def forward(self, state):
         g = state
-        values = self.gnn(g, g.ndata['n_feat'], g.edata['e_feat'])
-        values = self.mlp(values)
+        baseline = g.ndata["baseline"]
+
+        h = self.gnn(g, g.ndata['n_feat'], g.edata['e_feat'])
+        values = self.mlp(h)
+        values = values + baseline
+        values = torch.concat([values, baseline], dim=1)
         mask = torch.where(g.ndata["mask"], 0.0, float("-inf"))
         return values + mask

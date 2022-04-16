@@ -26,11 +26,15 @@ class FragmentBasedDesigner:
         g = mol_to_dgl(self.mol, time)
 
         # turn valid actions into mask
-        mask = torch.zeros((self.mol.GetNumAtoms(), len(self.vocab)), dtype=torch.bool)
+        mask = torch.zeros((self.mol.GetNumAtoms(), len(self.vocab) + 1), dtype=torch.bool)
         if self.valid_actions:
             a, b = tuple(zip(*list(self.valid_actions)))
             mask[a, b] = True
         g.ndata["mask"] = mask
+
+        # FIXME: kind of a hack, but easiest way I could think of
+        baseline = sum(self.discount ** i for i in range(self.steps_left)) * self.prop_fn(self.mol)
+        g.ndata["baseline"] = torch.full((self.mol.GetNumAtoms(), 1), baseline)
 
         return g
 
