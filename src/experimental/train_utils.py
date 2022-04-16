@@ -8,7 +8,7 @@ import statistics
 import dgl
 import numpy as np
 import torch
-import torch.nn.functional  as F
+import torch.nn.functional as F
 import wandb
 from rdkit.Chem import rdDepictor, Draw
 from tqdm import trange
@@ -78,14 +78,12 @@ def train_double_dqn(
             env.reset()
             episode += 1
 
-            # decay epsilon
-            policy.epsilon = min(policy.epsilon * eps_decay, 0.01)
-
             # validate and logging
             if use_wandb and (episode % log_freq == 0):
-                metrics = val_step(dqn, env, use_wandb, device)
+                metrics = val_step(dqn, env, policy.epsilon, use_wandb, device)
                 metrics["Episode"] = episode
                 metrics["Bellman Loss"] = statistics.fmean(losses)
+                metrics["Policy Epsilon"] = policy.epsilon
                 wandb.log(metrics)
 
                 losses = []  # training losses logged
@@ -93,6 +91,9 @@ def train_double_dqn(
             if use_wandb and (episode % ckpt_freq == 0):
                 model_path = str(pathlib.Path(wandb.run.dir) / f"model-ep={episode}.pt")
                 torch.save(dqn, model_path)
+
+            # decay epsilon
+            policy.epsilon = min(policy.epsilon * eps_decay, 0.01)
 
 
 def dqn_update(dqn, target_dqn, batch, optimizer, device):
@@ -137,21 +138,29 @@ def soft_target_update(dqn, target_dqn, polyak):
             target_p.data.add_((1 - polyak) * p.data)
 
 
-def val_step(dqn, env, use_wandb, device):
-    eps_greedy = DQNAgent(dqn, epsilon=0.05, device=device)  # almost greedy
+def val_step(dqn, env, eps_policy, use_wandb, device):
+    policy = DQNAgent(dqn, epsilon=eps_policy, device=device)
+    almost = DQNAgent(dqn, epsilon=0.05, device=device)  # almost greedy
     greedy = DQNAgent(dqn, epsilon=0.0, device=device)
 
-    eps_outs = []
+    pol_outs, eps_outs = [], []
     with torch.no_grad():
         for _ in range(10):
-            eps_outs.append(eps_greedy.rollout(env))
+            eps_outs.append(almost.rollout(env))
+            pol_outs.append(policy.rollout(env))
         opt_mol, opt_value = greedy.rollout(env)
+
+    pol_mols, pol_values = tuple(zip(*pol_outs))
+    pol_QEDs = [env.prop_fn(mol) for mol in pol_mols]
+
     eps_mols, eps_values = tuple(zip(*eps_outs))
     eps_QEDs = [env.prop_fn(mol) for mol in eps_mols]
 
     metrics = {
+        "Value-policy": statistics.fmean(pol_values),
         "Value-e=0.05": statistics.fmean(eps_values),
         "Value-greedy": opt_value,
+        "QED-policy": statistics.fmean(pol_QEDs),
         "QED-e=0.05": statistics.fmean(eps_QEDs),
         "QED-greedy": env.prop_fn(opt_mol)
     }
@@ -163,7 +172,8 @@ def val_step(dqn, env, use_wandb, device):
 
     # wandb logging
     if use_wandb:
-        metrics["Mol-greedy"] = wandb.Image(visualize_mol(opt_mol))
+        metrics["Mol-policy"] = wandb.Image(visualize_mol(pol_mols[-1]))
         metrics["Mol-e=0.05"] = wandb.Image(visualize_mol(eps_mols[-1]))
+        metrics["Mol-greedy"] = wandb.Image(visualize_mol(opt_mol))
 
     return metrics
