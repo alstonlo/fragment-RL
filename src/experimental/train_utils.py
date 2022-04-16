@@ -145,7 +145,7 @@ def val_step(dqn, env, eps_policy, use_wandb, device):
 
     pol_outs, eps_outs = [], []
     with torch.no_grad():
-        for _ in range(10):
+        for _ in range(50):
             eps_outs.append(almost.rollout(env))
             pol_outs.append(policy.rollout(env))
         opt_mol, opt_value = greedy.rollout(env)
