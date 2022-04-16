@@ -32,7 +32,7 @@ def seed_everything(seed):
 def train_double_dqn(
         dqn, env, buffer_size,
         n_train_iters, batch_size, lr, update_freq, polyak,
-        use_wandb, log_freq, device, **kwargs
+        use_wandb, log_freq, ckpt_freq, device, **kwargs
 ):
     device = torch.device(device)
     dqn = dqn.to(device)
@@ -49,9 +49,9 @@ def train_double_dqn(
 
     env.reset()
     episode = 0
-    burn_in = batch_size
+    losses = []
 
-    for step in trange(n_train_iters, desc="Iteration"):
+    for step in trange(-batch_size, n_train_iters, desc="Iteration"):
 
         # take step in environment
         s_t = env.torch_state
@@ -61,12 +61,14 @@ def train_double_dqn(
         done = env.done
         buffer.add(s_t=s_t, act=act, rew=rew, s_tp1=s_tp1, done=done)
 
-        # DQN update step
-        if step > burn_in:
-            batch = buffer.sample(batch_size)
-            loss = dqn_update(dqn, target_dqn, batch, optimizer, device)
-            if use_wandb and (step % log_freq == 0):
-                wandb.log({"Iteration": step, "Bellman Loss": loss})
+        if step < 0:  # burn-in
+            if done:
+                env.reset()
+            continue
+
+        batch = buffer.sample(batch_size)
+        loss = dqn_update(dqn, target_dqn, batch, optimizer, device)
+        losses.append(loss)
 
         # target DQN soft-polyak update
         if (step + 1) % update_freq == 0:
@@ -75,12 +77,23 @@ def train_double_dqn(
         if done:
             env.reset()
             episode += 1
-
-            # validate and logging
-            val_step(episode, dqn, env, use_wandb, device)
+            losses = []
 
             # decay epsilon
             policy.epsilon = min(policy.epsilon * 0.999, 0.01)
+
+            # validate and logging
+            metrics = val_step(dqn, env, use_wandb, device)
+            metrics["Episode"] = episode
+            metrics["Bellman Loss"] = statistics.fmean(losses)
+
+            if use_wandb and (episode % log_freq == 0):
+                wandb.log(metrics)
+
+            if use_wandb and (episode % ckpt_freq == 0):
+                model_path = str(pathlib.Path(wandb.run.dir) / f"model-ep={episode}.pt")
+                torch.save(dqn, model_path)
+                wandb.save(model_path)
 
 
 def dqn_update(dqn, target_dqn, batch, optimizer, device):
@@ -125,7 +138,7 @@ def soft_target_update(dqn, target_dqn, polyak):
             target_p.data.add_((1 - polyak) * p.data)
 
 
-def val_step(episode, dqn, env, use_wandb, device):
+def val_step(dqn, env, use_wandb, device):
     eps_greedy = DQNAgent(dqn, epsilon=0.05, device=device)  # almost greedy
     greedy = DQNAgent(dqn, epsilon=0.0, device=device)
 
@@ -138,7 +151,6 @@ def val_step(episode, dqn, env, use_wandb, device):
     eps_QEDs = [env.prop_fn(mol) for mol in eps_mols]
 
     metrics = {
-        "Episode": episode,
         "Value-e=0.05": statistics.fmean(eps_values),
         "Value-greedy": opt_value,
         "QED-e=0.05": statistics.fmean(eps_QEDs),
@@ -147,15 +159,10 @@ def val_step(episode, dqn, env, use_wandb, device):
 
     # wandb logging
     if use_wandb:
-        if episode % 20 == 0:
-            metrics["Mol-greedy"] = wandb.Image(visualize_mol(opt_mol))
-            metrics["Mol-e=0.05"] = wandb.Image(visualize_mol(eps_mols[-1]))
-        wandb.log(metrics)
+        metrics["Mol-greedy"] = wandb.Image(visualize_mol(opt_mol))
+        metrics["Mol-e=0.05"] = wandb.Image(visualize_mol(eps_mols[-1]))
 
-        if episode % 100 == 0:
-            model_path = str(pathlib.Path(wandb.run.dir) / "model.pt")
-            torch.save(dqn, model_path)
-            wandb.save(model_path)
+    return metrics
 
 
 def visualize_mol(mol, width=300, height=300):
