@@ -53,6 +53,8 @@ class FragmentBasedDesigner:
     def forsee(self, action):
         if self.done or (action not in self.valid_actions):
             raise ValueError
+        if action == self.nop_action:
+            return self.mol
 
         skeleton = Fragment(self.mol, action[0])
         arm = self.vocab[action[1]]
@@ -61,7 +63,7 @@ class FragmentBasedDesigner:
         return new_mol
 
     def step(self, action):
-        new_mol = self.mol if (action == self.nop_action) else self.forsee(action)
+        new_mol = self.forsee(action)
         self.state = (new_mol, self.steps_left - 1)
         self.valid_actions = self._enum_valid_actions()
 
@@ -70,6 +72,7 @@ class FragmentBasedDesigner:
             while self.steps_left > 0:
                 self.state = (self.mol, self.steps_left - 1)
                 reward += self._reward_fn()
+            self.valid_actions = self._enum_valid_actions()
         return reward
 
     def _enum_valid_actions(self):
