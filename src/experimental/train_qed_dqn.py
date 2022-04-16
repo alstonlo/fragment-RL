@@ -36,7 +36,7 @@ def main():
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--update_freq", type=int, default=20)
     parser.add_argument("--polyak", type=float, default=0.0)
-    parser.add_argument("--log_freq", type=int, default=100)
+    parser.add_argument("--log_freq", type=int, default=20)
     parser.add_argument("--ckpt_freq", type=int, default=1000)
 
     args = parser.parse_args()
