@@ -41,7 +41,7 @@ def main():
     parser.add_argument("--ckpt_freq", type=int, default=1000)
 
     args = parser.parse_args()
-    args.device = "gpu" if torch.cuda.is_available() else "cpu"
+    args.device = "cuda" if torch.cuda.is_available() else "cpu"
 
     vocab = FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl")
     vocab.cull(args.vocab_size)
