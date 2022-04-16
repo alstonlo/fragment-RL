@@ -83,11 +83,10 @@ def train_double_dqn(
             policy.epsilon = min(policy.epsilon * 0.999, 0.01)
 
             # validate and logging
-            metrics = val_step(dqn, env, use_wandb, device)
-            metrics["Episode"] = episode
-            metrics["Bellman Loss"] = statistics.fmean(losses)
-
             if use_wandb and (episode % log_freq == 0):
+                metrics = val_step(dqn, env, use_wandb, device)
+                metrics["Episode"] = episode
+                metrics["Bellman Loss"] = statistics.fmean(losses)
                 wandb.log(metrics)
 
             if use_wandb and (episode % ckpt_freq == 0):
@@ -157,15 +156,14 @@ def val_step(dqn, env, use_wandb, device):
         "QED-greedy": env.prop_fn(opt_mol)
     }
 
+    def visualize_mol(mol):
+        rdDepictor.Compute2DCoords(mol)
+        rdDepictor.GenerateDepictionMatching2DStructure(mol, mol)
+        return Draw.MolToImage(mol, size=(300, 300))
+
     # wandb logging
     if use_wandb:
         metrics["Mol-greedy"] = wandb.Image(visualize_mol(opt_mol))
         metrics["Mol-e=0.05"] = wandb.Image(visualize_mol(eps_mols[-1]))
 
     return metrics
-
-
-def visualize_mol(mol, width=300, height=300):
-    rdDepictor.Compute2DCoords(mol)
-    rdDepictor.GenerateDepictionMatching2DStructure(mol, mol)
-    return Draw.MolToImage(mol, size=(width, height))
