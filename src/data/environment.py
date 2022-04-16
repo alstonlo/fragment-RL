@@ -15,6 +15,7 @@ class FragmentBasedDesigner:
         self.max_mol_size = max_mol_size
         self.max_steps = max_steps
         self.discount = discount
+        self.nop_action = (0, len(vocab))
 
         self.state = (init_mol, self.max_steps)
         self.valid_actions = self._enum_valid_actions()
@@ -60,12 +61,12 @@ class FragmentBasedDesigner:
         return new_mol
 
     def step(self, action):
-        new_mol = self.forsee(action)
+        new_mol = self.mol if (action == self.nop_action) else self.forsee(action)
         self.state = (new_mol, self.steps_left - 1)
         self.valid_actions = self._enum_valid_actions()
 
         reward = self._reward_fn()
-        if not self.valid_actions:
+        if (not self.valid_actions) or (action == self.nop_action):
             while self.steps_left > 0:
                 self.state = (self.mol, self.steps_left - 1)
                 reward += self._reward_fn()
@@ -75,7 +76,7 @@ class FragmentBasedDesigner:
         if self.done:
             return set()
 
-        valid_actions = set()
+        valid_actions = {self.nop_action}
         for action in itertools.product(range(self.mol.GetNumAtoms()), range(len(self.vocab))):
             atom = self.mol.GetAtomWithIdx(action[0])
             arm = self.vocab[action[1]]
