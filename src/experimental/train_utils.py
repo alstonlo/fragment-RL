@@ -61,7 +61,7 @@ def train_double_dqn(
         done = env.done
         buffer.add(s_t=s_t, act=act, rew=rew, s_tp1=s_tp1, done=done)
 
-        if step < 0:  # burn-in
+        if step <= 0:  # burn-in
             if done:
                 env.reset()
             continue
@@ -71,7 +71,7 @@ def train_double_dqn(
         losses.append(loss)
 
         # target DQN soft-polyak update
-        if (step + 1) % update_freq == 0:
+        if step % update_freq == 0:
             soft_target_update(dqn, target_dqn, polyak)
 
         if done:
