@@ -1,14 +1,18 @@
 import pathlib
 import pickle
 
-from rdkit import Chem
+from rdkit import Chem, RDLogger
 from tqdm import tqdm
 
 from src.data.vocab import FragmentVocab
 
+lg = RDLogger.logger()
+lg.setLevel(RDLogger.CRITICAL)
+
 if __name__ == "__main__":
     # script to cache extracted vocab from ChEMBL
     debug = False
+
 
     def mol_iter(path):
         with open(path, "r") as f:
@@ -19,6 +23,7 @@ if __name__ == "__main__":
             mol = Chem.MolFromSmiles(smiles)
             assert mol is not None
             yield mol
+
 
     data_dir = pathlib.Path(__file__).parent
     chembl_path = data_dir / "chembl.txt"
