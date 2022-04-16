@@ -77,7 +77,6 @@ def train_double_dqn(
         if done:
             env.reset()
             episode += 1
-            losses = []
 
             # decay epsilon
             policy.epsilon = min(policy.epsilon * 0.999, 0.01)
@@ -88,6 +87,8 @@ def train_double_dqn(
                 metrics["Episode"] = episode
                 metrics["Bellman Loss"] = statistics.fmean(losses)
                 wandb.log(metrics)
+
+                losses = []  # training losses logged
 
             if use_wandb and (episode % ckpt_freq == 0):
                 model_path = str(pathlib.Path(wandb.run.dir) / f"model-ep={episode}.pt")
