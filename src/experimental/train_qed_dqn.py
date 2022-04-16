@@ -67,6 +67,7 @@ def main():
     if args.use_wandb:
         wandb.init(project="train_QED_FragmentDQN", dir=str(log_dir))
         wandb.config.update(vars(args))
+        wandb.save("*.pt")
 
     seed_everything(args.seed)
     train_double_dqn(dqn=dqn, env=env, **vars(args))

@@ -93,7 +93,6 @@ def train_double_dqn(
             if use_wandb and (episode % ckpt_freq == 0):
                 model_path = str(pathlib.Path(wandb.run.dir) / f"model-ep={episode}.pt")
                 torch.save(dqn, model_path)
-                wandb.save(model_path)
 
 
 def dqn_update(dqn, target_dqn, batch, optimizer, device):
