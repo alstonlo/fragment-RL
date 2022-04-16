@@ -93,7 +93,7 @@ def train_double_dqn(
                 torch.save(dqn, model_path)
 
             # decay epsilon
-            policy.epsilon = min(policy.epsilon * eps_decay, 0.01)
+            policy.epsilon = max(policy.epsilon * eps_decay, 0.01)
 
 
 def dqn_update(dqn, target_dqn, batch, optimizer, device):
