@@ -37,8 +37,8 @@ def main():
     parser.add_argument("--update_freq", type=int, default=1000)
     parser.add_argument("--polyak", type=float, default=0.0)
     parser.add_argument("--eps_decay", type=float, default=0.9999)
-    parser.add_argument("--log_freq", type=int, default=100)
-    parser.add_argument("--ckpt_freq", type=int, default=1000)
+    parser.add_argument("--log_freq", type=int, default=200)
+    parser.add_argument("--ckpt_freq", type=int, default=2000)
 
     args = parser.parse_args()
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
