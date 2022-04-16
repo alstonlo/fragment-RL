@@ -31,7 +31,7 @@ def seed_everything(seed):
 
 def train_double_dqn(
         dqn, env, buffer_size,
-        n_train_iters, batch_size, lr, update_freq, polyak,
+        n_train_iters, batch_size, lr, update_freq, polyak, eps_decay,
         use_wandb, log_freq, ckpt_freq, device, **kwargs
 ):
     device = torch.device(device)
@@ -79,7 +79,7 @@ def train_double_dqn(
             episode += 1
 
             # decay epsilon
-            policy.epsilon = min(policy.epsilon * 0.999, 0.01)
+            policy.epsilon = min(policy.epsilon * args.eps_decay, 0.01)
 
             # validate and logging
             if use_wandb and (episode % log_freq == 0):
