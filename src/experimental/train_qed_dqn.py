@@ -16,23 +16,23 @@ PROJECT_DIR = pathlib.Path(__file__).parents[2]
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--use_wandb", type=int, default=0)
+    parser.add_argument("--use_wandb", type=int, default=1)
     parser.add_argument("--seed", type=int, default=413)
 
-    parser.add_argument("--vocab_size", type=int, default=3)
+    parser.add_argument("--vocab_size", type=int, default=1000)
 
     parser.add_argument("--init_mol", type=str, default="CC")
     parser.add_argument("--max_mol_size", type=int, default=38)
     parser.add_argument("--max_steps", type=int, default=15)
-    parser.add_argument("--discount", type=float, default=0.9)
+    parser.add_argument("--discount", type=float, default=0.7)
 
     parser.add_argument("--n_node_hidden", type=int, default=64)
     parser.add_argument("--n_edge_hidden", type=int, default=128)
     parser.add_argument("--n_layers", type=int, default=6)
 
-    parser.add_argument("--buffer_size", type=int, default=10000)
+    parser.add_argument("--buffer_size", type=int, default=5000)
     parser.add_argument("--n_train_iters", type=int, default=200000)
-    parser.add_argument("--batch_size", type=int, default=10)
+    parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--update_freq", type=int, default=20)
     parser.add_argument("--polyak", type=float, default=0.0)
@@ -44,7 +44,7 @@ def main():
     vocab.cull(args.vocab_size)
 
     env = FragmentBasedDesigner(
-        init_mol=Chem.MolFromSmiles("CC"),
+        init_mol=Chem.MolFromSmiles(args.init_mol),
         vocab=vocab,
         prop_fn=qed,
         max_mol_size=args.max_mol_size,
