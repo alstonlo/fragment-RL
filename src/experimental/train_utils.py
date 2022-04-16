@@ -79,7 +79,7 @@ def train_double_dqn(
             episode += 1
 
             # decay epsilon
-            policy.epsilon = min(policy.epsilon * args.eps_decay, 0.01)
+            policy.epsilon = min(policy.epsilon * eps_decay, 0.01)
 
             # validate and logging
             if use_wandb and (episode % log_freq == 0):
