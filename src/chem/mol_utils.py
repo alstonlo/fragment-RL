@@ -1,6 +1,9 @@
 import dgl
 import torch
+import itertools
 from rdkit import Chem
+from rdkit import DataStructs
+from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.rdchem import HybridizationType, BondType
 
 
@@ -93,3 +96,30 @@ def mol_to_dgl(mol, time):
     bond_feats = _zinc_edge_features(mol, time, g.edges())
     g.edata.update(bond_feats)
     return g
+
+# ==================================================================================================
+# Metrics
+# ==================================================================================================
+
+
+def validity(mols):  # validity guaranteed, but sanity check
+    valid = [m for m in mols if (Chem.MolFromSmiles(m.base_smiles) is not None)]
+    return len(valid) / len(mols)
+
+
+def uniqueness(mols):
+    base_smiles = [m.base_smiles for m in mols]
+    return len(set(base_smiles)) / len(base_smiles)
+
+
+def molecule_similarity(mol1, mol2):
+    vec1 = rdMolDescriptors.GetMorganFingerprint(mol1.rdkmol, radius=2)
+    vec2 = rdMolDescriptors.GetMorganFingerprint(mol2.rdkmol, radius=2)
+    return DataStructs.TanimotoSimilarity(vec1, vec2)
+
+
+def pairwise_diversities(mols):
+    scores = []
+    for mol1, mol2 in itertools.combinations(mols, r=2):
+        scores.append(1 - molecule_similarity(mol1, mol2))
+    return scores
