@@ -22,9 +22,12 @@ def main():
     dqn = torch.load(result_dir / "model.pt", map_location=DEVICE)
     dqn.device = DEVICE
 
+    vocab = FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl")
+    vocab.cull(1000)
+
     env = FragmentBasedDesigner(
         init_mol=Chem.MolFromSmiles("CC"),
-        vocab=FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl"),
+        vocab=vocab,
         prop_fn=qed,
         max_mol_size=38,
         max_steps=15,
@@ -40,7 +43,7 @@ def main():
         for _ in trange(n_samples, desc=f"Eps={epsilon:.2f}"):
             mol, value = agent.rollout(env)
             next_qed = env.prop_fn(mol)
-            sampled.append({"smiles": str(mol), "value": value, "qed": next_qed})
+            sampled.append({"smiles": Chem.MolToSmiles(mol), "value": value, "qed": next_qed})
         sampled = pd.DataFrame(sampled)
         sampled.to_csv(result_dir / f"eps={epsilon}.csv", index=False)
 
