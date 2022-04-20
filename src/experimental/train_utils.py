@@ -29,7 +29,7 @@ def seed_everything(seed):
     return seed
 
 
-def train_double_dqn(
+def train_dqn(
         dqn, env, buffer_size,
         n_train_iters, batch_size, lr, update_freq, polyak, eps_decay,
         use_wandb, log_freq, ckpt_freq, device, **kwargs

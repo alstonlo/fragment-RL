@@ -8,7 +8,7 @@ from rdkit import Chem
 from src.chem.prop_utils import qed
 from src.data.environment import FragmentBasedDesigner
 from src.data.vocab import FragmentVocab
-from src.experimental.train_utils import train_double_dqn, seed_everything
+from src.experimental.train_utils import train_dqn, seed_everything
 from src.models.dqn import FragmentDQN
 
 PROJECT_DIR = pathlib.Path(__file__).parents[2]
@@ -71,7 +71,7 @@ def main():
         wandb.save("*.pt")
 
     seed_everything(args.seed)
-    train_double_dqn(dqn=dqn, env=env, **vars(args))
+    train_dqn(dqn=dqn, env=env, **vars(args))
 
 
 if __name__ == "__main__":
