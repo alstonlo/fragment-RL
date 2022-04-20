@@ -5,7 +5,9 @@ import itertools
 from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import Draw
 from rdkit.Chem.rdchem import HybridizationType, BondType
+from chem.prop_utils import qed
 
 class Molecule:
 
@@ -47,6 +49,16 @@ class Molecule:
         rdDepictor.GenerateDepictionMatching2DStructure(self.rdkmol, self.rdkmol)
         return Draw.MolToImage(self.rdkmol, size=(width, height))
 
+def draw_mol_to_file(mol_lst, directory):
+    mols = []
+    for molecule in mol_lst:
+        smiles = molecule.smiles
+        mol = Chem.MolFromSmiles(smiles)
+        mols.append(mol)
+
+    img = Draw.MolsToGridImage(mols,molsPerRow=3,subImgSize=(200,200),legends=[f"QED = {round(qed(x), 3)}" for x in mols]) 
+    img.save(directory+'/'+smiles+'.png')    
+    
 def sanitize(mol):
     if mol.GetNumBonds() < 1:
         return False
