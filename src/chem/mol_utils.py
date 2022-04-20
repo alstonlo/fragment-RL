@@ -1,11 +1,51 @@
 import dgl
 import torch
+import functools
 import itertools
 from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.rdchem import HybridizationType, BondType
 
+class Molecule:
+
+    @classmethod
+    def from_smiles(cls, smiles):
+        return Molecule(Chem.MolFromSmiles(smiles))
+
+    def __init__(self, rdkmol):
+        self.smiles = Chem.MolToSmiles(rdkmol)
+
+    def __str__(self):
+        return self.base_smiles
+
+    def __hash__(self):
+        return hash(self.smiles)
+
+    def __eq__(self, other):
+        return self.smiles == other.smiles
+
+    @property
+    @functools.lru_cache()
+    def rdkmol(self):
+        return Chem.MolFromSmiles(self.smiles)
+
+    @property
+    @functools.lru_cache()
+    def base_smiles(self):
+        clone = Chem.Mol(self.rdkmol)
+        for atom in clone.GetAtoms():
+            if openness(atom):
+                set_openness(atom, is_open=False)
+        return Chem.MolToSmiles(clone)
+
+    def base_copy(self):
+        return Molecule.from_smiles(self.base_smiles)
+
+    def visualize(self, width=300, height=300):
+        rdDepictor.Compute2DCoords(self.rdkmol)
+        rdDepictor.GenerateDepictionMatching2DStructure(self.rdkmol, self.rdkmol)
+        return Draw.MolToImage(self.rdkmol, size=(width, height))
 
 def sanitize(mol):
     if mol.GetNumBonds() < 1:
@@ -25,6 +65,8 @@ ATOM_TYPES = ["H", "C", "N", "O", "S", "P", "F", "Cl", "Br", "I"]
 HYBRID_TYPES = [HybridizationType.SP, HybridizationType.SP2, HybridizationType.SP3]
 BOND_TYPES = [BondType.SINGLE, BondType.DOUBLE, BondType.TRIPLE, BondType.AROMATIC, None]
 
+def openness(atom):
+    return atom.GetAtomMapNum() == 1
 
 def _zinc_atoms_features(mol, time):
     feats = {"node_type": [], "node_charge": [], "n_feat": []}
@@ -123,3 +165,4 @@ def pairwise_diversities(mols):
     for mol1, mol2 in itertools.combinations(mols, r=2):
         scores.append(1 - molecule_similarity(mol1, mol2))
     return scores
+
