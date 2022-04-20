@@ -8,7 +8,7 @@ from src.chem.mol_utils import Molecule, pairwise_diversities, uniqueness, valid
 
 
 def main():
-    result_dir = pathlib.Path(__file__).parents[0] / "results" / "qed_dqn"
+    result_dir = pathlib.Path(__file__).parents[2] / "results" / "qed_dqn"
     result_dir.mkdir(exist_ok=True)
 
     for epsilon in [0.0, 0.05, 0.1]:
