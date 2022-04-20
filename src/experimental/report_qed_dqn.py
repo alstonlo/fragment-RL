@@ -4,7 +4,7 @@ import statistics
 from rdkit import Chem
 import pandas as pd
 
-from src.chem.mol_utils import Molecule, pairwise_diversities, uniqueness, validity
+from src.chem.mol_utils import Molecule, pairwise_diversities, uniqueness, validity, draw_mol_to_file
 
 
 def main():
@@ -31,9 +31,10 @@ def main():
         print(f"\tUnique:   {uniqueness(mols):.3f}")
         print(f"\tDiverse:  {statistics.mean(pairwise_diversities(mols)):.3f}")
 
-        top3 = list(sorted(qeds, reverse=True))[:3]
+        top3 = list(sorted(set(list(zip(qeds, mols))), reverse=True))
         if epsilon != 0:
-            print(f"\tTop 3: [{top3[0]:.3f}, {top3[1]:.3f}, {top3[2]:.3f}]")
+            print(f"\tTop 3: [{top3[0][0]:.3f}, {top3[1][0]:.3f}, {top3[2][0]:.3f}]")
+            draw_mol_to_file([top3[0][1], top3[1][1], top3[2][1]], str(result_dir))
 
         print()
 
