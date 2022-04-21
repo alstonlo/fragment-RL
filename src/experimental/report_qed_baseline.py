@@ -7,7 +7,7 @@ import seaborn as sns
 from scipy.stats import pearsonr, spearmanr
 from rdkit import Chem
 
-from src.chem.mol_utils import pairwise_diversities, uniqueness, validity
+from src.chem.mol_utils import Molecule, pairwise_diversities, uniqueness, validity
 
 
 def main():
@@ -29,7 +29,7 @@ def main():
         print(f"\tQED:      ${statistics.mean(qeds):.3f}\\pm {statistics.pstdev(qeds):.3f}$")
         print(f"\tReturn:   ${statistics.mean(values):.3f}\\pm {statistics.pstdev(values):.3f}$")
 
-        mols = [Chem.MolFromSmiles(s) for s in smiles]
+        mols = [Molecule.from_smiles(s) for s in smiles]
         print(f"\tValid:    {validity(mols)}")
         print(f"\tUnique:   {uniqueness(mols):.3f}")
         print(f"\tDiverse:  {statistics.mean(pairwise_diversities(mols)):.3f}")
