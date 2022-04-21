@@ -38,7 +38,7 @@ def main():
         for _ in trange(n_samples, desc=f"Eps={epsilon:.2f}"):
             mol, value = agent.rollout(env)
             next_qed = env.prop_fn(mol)
-            sampled.append({"smiles": str(mol), "value": value, "qed": next_qed})
+            sampled.append({"smiles": Chem.MolToSmiles(mol), "value": value, "qed": next_qed})
         sampled = pd.DataFrame(sampled)
         sampled.to_csv(result_dir / f"eps={epsilon}.csv", index=False)
 
