@@ -17,9 +17,12 @@ def main():
     result_dir = pathlib.Path(__file__).parents[2] / "results" / "qed_baseline"
     result_dir.mkdir(exist_ok=True)
 
+    vocab = FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl")
+    vocab.cull(1000)
+    
     env = FragmentBasedDesigner(
         init_mol=Chem.MolFromSmiles("CC"),
-        vocab=FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl"),
+        vocab=vocab,
         prop_fn=qed,
         max_mol_size=38,
         max_steps=15,
