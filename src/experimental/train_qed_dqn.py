@@ -11,12 +11,14 @@ from src.data.vocab import FragmentVocab
 from src.experimental.train_utils import train_dqn, seed_everything
 from src.models.dqn import FragmentDQN
 
+from src.experimental.docking_simple import DockingVina
+
 PROJECT_DIR = pathlib.Path(__file__).parents[2]
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--use_wandb", type=int, default=1)
+    parser.add_argument("--use_wandb", type=int, default=0)
     parser.add_argument("--seed", type=int, default=413)
 
     parser.add_argument("--vocab_size", type=int, default=1000)
@@ -46,10 +48,18 @@ def main():
     vocab = FragmentVocab.load_from_pkl(PROJECT_DIR / "data" / "vocab.pkl")
     vocab.cull(args.vocab_size)
 
+    docking_config = {'vina_program': 'bin/qvina2.exe', 'temp_dir': 'tmp', 'exhaustiveness': 1,
+                      'num_sub_proc': 10, 'num_cpu_dock': 5, 'num_modes': 10, 'timeout_gen3d': 30,
+                      'timeout_dock': 100, 'receptor_file': 'docking/fa7/receptor.pdbqt'}
+    box_center = (26.413, 11.282, 27.238)
+    box_size = (18.521, 17.479, 19.995)
+    docking_config['box_parameter'] = (box_center, box_size)
+    dv = DockingVina(docking_config)
+
     env = FragmentBasedDesigner(
         init_mol=Chem.MolFromSmiles(args.init_mol),
         vocab=vocab,
-        prop_fn=qed,
+        prop_fn=dv.predict,
         max_mol_size=args.max_mol_size,
         max_steps=args.max_steps,
         discount=args.discount

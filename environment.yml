@@ -1,6 +1,7 @@
 name: fragment-rl
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.9
   - rdkit
@@ -8,4 +9,5 @@ dependencies:
   - pytorch
   - dgl
   - wandb
+  - openbabel
 prefix: C:\Users\alsto\miniconda3\envs\fragment-rl
