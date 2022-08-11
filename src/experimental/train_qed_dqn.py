@@ -41,6 +41,7 @@ def main():
     parser.add_argument("--eps_decay", type=float, default=0.9999)
     parser.add_argument("--log_freq", type=int, default=50)
     parser.add_argument("--ckpt_freq", type=int, default=2000)
+    parser.add_argument("--target", type=str, default="fa7")
 
     args = parser.parse_args()
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -50,9 +51,19 @@ def main():
 
     docking_config = {'vina_program': 'bin/qvina2.exe', 'temp_dir': 'tmp', 'exhaustiveness': 1,
                       'num_sub_proc': 10, 'num_cpu_dock': 5, 'num_modes': 10, 'timeout_gen3d': 30,
-                      'timeout_dock': 100, 'receptor_file': 'docking/fa7/receptor.pdbqt'}
-    box_center = (26.413, 11.282, 27.238)
-    box_size = (18.521, 17.479, 19.995)
+                      'timeout_dock': 100,
+                      'receptor_file': 'docking/{}/receptor.pdbqt'.format(args.target)}
+
+    assert args.target in ['fa7', 'parp1', '5ht1b'], "Wrong target type"
+    if args.target == 'fa7':
+        box_center = (10.131, 41.879, 32.097)
+        box_size = (20.673, 20.198, 21.362)
+    elif args.target == 'parp1':
+        box_center = (26.413, 11.282, 27.238)
+        box_size = (18.521, 17.479, 19.995)
+    elif args.target == '5ht1b':
+        box_center = (-26.602, 5.277, 17.898)
+        box_size = (22.5, 22.5, 22.5)
     docking_config['box_parameter'] = (box_center, box_size)
     dv = DockingVina(docking_config)
 
